@@ -1,1038 +1,1168 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Visor EML</title>
-<style>
-  :root{
-    --bg: #EAEDE6;
-    --bg-2: #DEE3D7;
-    --surface: #FAFAF6;
-    --ink: #22271F;
-    --ink-soft: #5C6455;
-    --ink-faint: #8B9280;
-    --accent: #A8382B;
-    --accent-ink: #FBEFE9;
-    --stamp: #3E6152;
-    --line: #C9CFBE;
-    --line-soft: #DBDFCF;
-    --mono-bg: #20241D;
-    --mono-ink: #DCE0CC;
-    --mono-line: #7C8A6C;
-    --mono-accent: #E3B65C;
-    --radius-s: 3px;
-    --serif: Iowan Old Style, Palatino Linotype, Palatino, Georgia, serif;
-    --mono: "IBM Plex Mono", SFMono-Regular, Menlo, Consolas, monospace;
-    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-  }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eml Magic Viewr</title>
+  <style>
+    :root {
+      --bg: #EAEDE6;
+      --bg-2: #DEE3D7;
+      --surface: #FAFAF6;
+      --ink: #22271F;
+      --ink-soft: #5C6455;
+      --ink-faint: #8B9280;
+      --accent: #A8382B;
+      --accent-ink: #FBEFE9;
+      --stamp: #3E6152;
+      --line: #C9CFBE;
+      --line-soft: #DBDFCF;
+      --mono-bg: #20241D;
+      --mono-ink: #DCE0CC;
+      --mono-line: #7C8A6C;
+      --mono-accent: #E3B65C;
+      --radius-s: 3px;
+      --serif: Iowan Old Style, Palatino Linotype, Palatino, Georgia, serif;
+      --mono: "IBM Plex Mono", SFMono-Regular, Menlo, Consolas, monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    }
 
-  *{ box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
-  body{
-    margin:0;
-    background: var(--bg);
-    background-image:
-      radial-gradient(circle at 1px 1px, rgba(34,39,31,0.05) 1px, transparent 0);
-    background-size: 22px 22px;
-    color: var(--ink);
-    font-family: var(--sans);
-    min-height:100vh;
-    padding: 40px 20px 80px;
-  }
+    body {
+      margin: 0;
+      background: var(--bg);
+      background-image:
+        radial-gradient(circle at 1px 1px, rgba(34, 39, 31, 0.05) 1px, transparent 0);
+      background-size: 22px 22px;
+      color: var(--ink);
+      font-family: var(--sans);
+      min-height: 100vh;
+      padding: 40px 20px 80px;
+    }
 
-  .wrap{ max-width: 880px; margin: 0 auto; }
+    .wrap {
+      max-width: 880px;
+      margin: 0 auto;
+    }
 
-  /* ---------- Header ---------- */
-  .masthead{
-    display:flex;
-    align-items:baseline;
-    justify-content:space-between;
-    margin-bottom: 34px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid var(--line);
-  }
-  .masthead h1{
-    font-family: var(--serif);
-    font-weight: 600;
-    font-size: 26px;
-    margin:0;
-    letter-spacing: 0.2px;
-  }
-  .masthead .tag{
-    font-size: 12.5px;
-    color: var(--ink-soft);
-    max-width: 260px;
-    text-align:right;
-    line-height:1.4;
-  }
+    /* ---------- Header ---------- */
+    .masthead {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 34px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--line);
+    }
 
-  /* ---------- Dropzone ---------- */
-  .drop-screen{
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap: 22px;
-    padding: 30px 0 10px;
-  }
+    .masthead h1 {
+      font-family: var(--serif);
+      font-weight: 600;
+      font-size: 26px;
+      margin: 0;
+      letter-spacing: 0.2px;
+    }
 
-  .envelope{
-    width: 100%;
-    max-width: 560px;
-    aspect-ratio: 16 / 10;
-    position: relative;
-    background: var(--surface);
-    border: 1.5px dashed var(--line);
-    border-radius: 6px;
-    cursor: pointer;
-    transition: border-color .15s ease, background .15s ease;
-    overflow:hidden;
-  }
-  .envelope:hover, .envelope.drag{
-    border-color: var(--accent);
-    background: #FDF8F5;
-  }
-  .envelope svg{ position:absolute; inset:0; width:100%; height:100%; }
-  .envelope .flap{ fill: none; stroke: var(--line); stroke-width: 1.2; }
-  .envelope:hover .flap, .envelope.drag .flap{ stroke: var(--accent); }
+    .masthead .tag {
+      font-size: 12.5px;
+      color: var(--ink-soft);
+      max-width: 260px;
+      text-align: right;
+      line-height: 1.4;
+    }
 
-  .envelope .drop-copy{
-    position:absolute;
-    left:50%; top: 62%;
-    transform: translate(-50%,-50%);
-    text-align:center;
-    pointer-events:none;
-  }
-  .envelope .drop-copy .cta{
-    font-family: var(--serif);
-    font-size: 18px;
-    color: var(--ink);
-  }
-  .envelope .drop-copy .sub{
-    font-size: 12.5px;
-    color: var(--ink-faint);
-    margin-top: 4px;
-  }
+    /* ---------- Dropzone ---------- */
+    .drop-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 22px;
+      padding: 30px 0 10px;
+    }
 
-  input[type=file]{ display:none; }
+    .envelope {
+      width: 100%;
+      max-width: 560px;
+      aspect-ratio: 16 / 10;
+      position: relative;
+      background: var(--surface);
+      border: 1.5px dashed var(--line);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: border-color .15s ease, background .15s ease;
+      overflow: hidden;
+    }
 
-  .privacy-note{
-    display:flex;
-    align-items:center;
-    gap:8px;
-    font-size: 12.5px;
-    color: var(--ink-soft);
-  }
-  .privacy-note .dot{
-    width:6px;height:6px;border-radius:50%;
-    background: var(--stamp);
-    flex-shrink:0;
-  }
+    .envelope:hover,
+    .envelope.drag {
+      border-color: var(--accent);
+      background: #FDF8F5;
+    }
 
-  .error-box{
-    margin-top: 14px;
-    padding: 12px 14px;
-    background: #FBEFE9;
-    border: 1px solid var(--accent);
-    border-radius: var(--radius-s);
-    color: #7A281D;
-    font-size: 13.5px;
-    max-width: 560px;
-    display:none;
-  }
+    .envelope svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
 
-  /* ---------- App screen ---------- */
-  .app-screen{ display:none; }
+    .envelope .flap {
+      fill: none;
+      stroke: var(--line);
+      stroke-width: 1.2;
+    }
 
-  .letter-card{
-    position:relative;
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    padding: 22px 26px 20px;
-    margin-bottom: 0;
-  }
+    .envelope:hover .flap,
+    .envelope.drag .flap {
+      stroke: var(--accent);
+    }
 
-  .stamp{
-    position:absolute;
-    top: -10px; right: 22px;
-    width: 46px; height: 56px;
-    background: var(--accent);
-    color: var(--accent-ink);
-    transform: rotate(3deg);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-family: var(--serif);
-    font-size: 10px;
-    text-align:center;
-    line-height:1.2;
-    padding: 4px;
-    box-shadow: 0 3px 6px rgba(34,39,31,0.18);
-  }
-  .stamp::before{
-    content:"";
-    position:absolute; inset: -1px;
-    background-image:
-      radial-gradient(circle, var(--bg) 1.6px, transparent 1.6px);
-    background-size: 7px 7px;
-    background-position: -3.5px -3.5px;
-    pointer-events:none;
-  }
+    .envelope .drop-copy {
+      position: absolute;
+      left: 50%;
+      top: 62%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      pointer-events: none;
+    }
 
-  .field-row{
-    display:flex;
-    gap: 10px;
-    padding: 5px 0;
-    font-size: 14px;
-    border-bottom: 1px solid var(--line-soft);
-  }
-  .field-row:last-of-type{ border-bottom:none; }
-  .field-row .k{
-    width: 62px;
-    flex-shrink:0;
-    color: var(--ink-faint);
-    font-size: 12px;
-    padding-top: 2px;
-  }
-  .field-row .v{
-    color: var(--ink);
-    word-break: break-word;
-  }
-  .field-row .v.subject{
-    font-family: var(--serif);
-    font-size: 17px;
-    font-weight: 600;
-  }
-  .addr-chip{
-    display:inline-block;
-    background: var(--bg-2);
-    border-radius: 3px;
-    padding: 1px 7px;
-    margin: 1px 4px 1px 0;
-    font-size: 13px;
-  }
+    .envelope .drop-copy .cta {
+      font-family: var(--serif);
+      font-size: 18px;
+      color: var(--ink);
+    }
 
-  .toolbar-row{
-    display:flex;
-    justify-content: space-between;
-    align-items:center;
-    margin-top: 16px;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
+    .envelope .drop-copy .sub {
+      font-size: 12.5px;
+      color: var(--ink-faint);
+      margin-top: 4px;
+    }
 
-  .new-file-btn{
-    font-size: 12.5px;
-    color: var(--ink-soft);
-    background:none;
-    border: 1px solid var(--line);
-    border-radius: var(--radius-s);
-    padding: 6px 11px;
-    cursor:pointer;
-    font-family: var(--sans);
-  }
-  .new-file-btn:hover{ border-color: var(--ink-faint); color: var(--ink); }
+    input[type=file] {
+      display: none;
+    }
 
-  /* ---------- Tabs ---------- */
-  .tabs{
-    display:flex;
-    gap: 3px;
-    margin-top: 22px;
-    padding-left: 4px;
-  }
-  .tab-btn{
-    font-family: var(--sans);
-    font-size: 13px;
-    color: var(--ink-soft);
-    background: var(--bg-2);
-    border: 1px solid var(--line);
-    border-bottom: none;
-    padding: 9px 16px 8px;
-    cursor:pointer;
-    clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
-    margin-right: -6px;
-    position:relative;
-    top: 1px;
-  }
-  .tab-btn.active{
-    background: var(--surface);
-    color: var(--ink);
-    font-weight: 600;
-    z-index:2;
-  }
-  .tab-btn:hover:not(.active){ color: var(--ink); }
-  .tab-count{
-    font-size: 10.5px;
-    color: var(--ink-faint);
-    margin-left: 4px;
-  }
+    .privacy-note {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12.5px;
+      color: var(--ink-soft);
+    }
 
-  .panel{
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 0 6px 6px 6px;
-    min-height: 360px;
-    display:none;
-  }
-  .panel.active{ display:block; }
+    .privacy-note .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--stamp);
+      flex-shrink: 0;
+    }
 
-  .panel-toolbar{
-    display:flex;
-    justify-content: flex-end;
-    gap: 8px;
-    padding: 10px 14px;
-    border-bottom: 1px solid var(--line-soft);
-  }
-  .mini-btn{
-    font-family: var(--sans);
-    font-size: 12px;
-    color: var(--ink-soft);
-    background: var(--bg);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-s);
-    padding: 5px 10px;
-    cursor:pointer;
-  }
-  .mini-btn:hover{ color: var(--ink); border-color: var(--ink-faint); }
-  .mini-btn.copied{ color: var(--stamp); border-color: var(--stamp); }
+    .error-box {
+      margin-top: 14px;
+      padding: 12px 14px;
+      background: #FBEFE9;
+      border: 1px solid var(--accent);
+      border-radius: var(--radius-s);
+      color: #7A281D;
+      font-size: 13.5px;
+      max-width: 560px;
+      display: none;
+    }
 
-  /* Rendered view */
-  #renderFrame{
-    width:100%;
-    height: 520px;
-    border:0;
-    display:block;
-    background: #fff;
-  }
-  .plain-fallback{
-    padding: 24px 26px;
-    white-space: pre-wrap;
-    font-family: var(--sans);
-    font-size: 14.5px;
-    line-height:1.6;
-    color: var(--ink);
-  }
+    /* ---------- App screen ---------- */
+    .app-screen {
+      display: none;
+    }
 
-  .attach-section{
-    border-top: 1px solid var(--line-soft);
-    padding: 14px 16px 16px;
-  }
-  .attach-section .lbl{
-    font-size: 11px;
-    text-transform: none;
-    color: var(--ink-faint);
-    margin-bottom: 8px;
-  }
-  .attach-list{ display:flex; flex-wrap:wrap; gap:8px; }
-  .attach-chip{
-    display:flex;
-    align-items:center;
-    gap:8px;
-    background: var(--bg-2);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-s);
-    padding: 7px 10px;
-    text-decoration:none;
-    color: var(--ink);
-    font-size: 12.5px;
-    max-width: 240px;
-  }
-  .attach-chip:hover{ border-color: var(--accent); }
-  .attach-chip .paperclip{ flex-shrink:0; color: var(--ink-faint); }
-  .attach-chip .meta{ overflow:hidden; }
-  .attach-chip .fname{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; }
-  .attach-chip .fsize{ color: var(--ink-faint); font-size: 11px; }
+    .letter-card {
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 22px 26px 20px;
+      margin-bottom: 0;
+    }
 
-  /* Raw code view */
-  .code-view{
-    display:flex;
-    max-height: 560px;
-    overflow:auto;
-    font-family: var(--mono);
-    font-size: 12.5px;
-    line-height: 1.6;
-    background: var(--mono-bg);
-    color: var(--mono-ink);
-    border-radius: 0 0 6px 6px;
-  }
-  .code-view .lines{
-    padding: 14px 10px;
-    text-align:right;
-    color: var(--mono-line);
-    user-select:none;
-    border-right: 1px solid rgba(255,255,255,0.08);
-    flex-shrink:0;
-  }
-  .code-view pre{
-    margin:0;
-    padding: 14px 16px;
-    white-space: pre-wrap;
-    word-break: break-word;
-    flex:1;
-  }
+    .stamp {
+      position: absolute;
+      top: -10px;
+      right: 22px;
+      width: 46px;
+      height: 56px;
+      background: var(--accent);
+      color: var(--accent-ink);
+      transform: rotate(3deg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--serif);
+      font-size: 10px;
+      text-align: center;
+      line-height: 1.2;
+      padding: 4px;
+      box-shadow: 0 3px 6px rgba(34, 39, 31, 0.18);
+    }
 
-  .html-view{
-    max-height: 560px;
-    overflow:auto;
-  }
-  .html-view pre{
-    margin:0;
-    padding: 18px 20px;
-    white-space: pre-wrap;
-    word-break: break-word;
-    font-family: var(--mono);
-    font-size: 12.5px;
-    line-height: 1.6;
-    color: var(--ink);
-  }
+    .stamp::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      background-image:
+        radial-gradient(circle, var(--bg) 1.6px, transparent 1.6px);
+      background-size: 7px 7px;
+      background-position: -3.5px -3.5px;
+      pointer-events: none;
+    }
 
-  .empty-note{
-    padding: 40px 26px;
-    color: var(--ink-faint);
-    font-size: 13.5px;
-    text-align:center;
-  }
+    .field-row {
+      display: flex;
+      gap: 10px;
+      padding: 5px 0;
+      font-size: 14px;
+      border-bottom: 1px solid var(--line-soft);
+    }
 
-  footer{
-    text-align:center;
-    margin-top: 30px;
-    font-size: 11.5px;
-    color: var(--ink-faint);
-  }
+    .field-row:last-of-type {
+      border-bottom: none;
+    }
 
-  @media (max-width: 560px){
-    .masthead{ flex-direction:column; gap:8px; }
-    .masthead .tag{ text-align:left; max-width:none; }
-    .field-row .k{ width: 48px; }
-    #renderFrame{ height: 420px; }
-  }
-</style>
+    .field-row .k {
+      width: 62px;
+      flex-shrink: 0;
+      color: var(--ink-faint);
+      font-size: 12px;
+      padding-top: 2px;
+    }
+
+    .field-row .v {
+      color: var(--ink);
+      word-break: break-word;
+    }
+
+    .field-row .v.subject {
+      font-family: var(--serif);
+      font-size: 17px;
+      font-weight: 600;
+    }
+
+    .addr-chip {
+      display: inline-block;
+      background: var(--bg-2);
+      border-radius: 3px;
+      padding: 1px 7px;
+      margin: 1px 4px 1px 0;
+      font-size: 13px;
+    }
+
+    .toolbar-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 16px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .new-file-btn {
+      font-size: 12.5px;
+      color: var(--ink-soft);
+      background: none;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-s);
+      padding: 6px 11px;
+      cursor: pointer;
+      font-family: var(--sans);
+    }
+
+    .new-file-btn:hover {
+      border-color: var(--ink-faint);
+      color: var(--ink);
+    }
+
+    /* ---------- Tabs ---------- */
+    .tabs {
+      display: flex;
+      gap: 3px;
+      margin-top: 22px;
+      padding-left: 4px;
+    }
+
+    .tab-btn {
+      font-family: var(--sans);
+      font-size: 13px;
+      color: var(--ink-soft);
+      background: var(--bg-2);
+      border: 1px solid var(--line);
+      border-bottom: none;
+      padding: 9px 16px 8px;
+      cursor: pointer;
+      clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+      margin-right: -6px;
+      position: relative;
+      top: 1px;
+    }
+
+    .tab-btn.active {
+      background: var(--surface);
+      color: var(--ink);
+      font-weight: 600;
+      z-index: 2;
+    }
+
+    .tab-btn:hover:not(.active) {
+      color: var(--ink);
+    }
+
+    .tab-count {
+      font-size: 10.5px;
+      color: var(--ink-faint);
+      margin-left: 4px;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 0 6px 6px 6px;
+      min-height: 360px;
+      display: none;
+    }
+
+    .panel.active {
+      display: block;
+    }
+
+    .panel-toolbar {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--line-soft);
+    }
+
+    .mini-btn {
+      font-family: var(--sans);
+      font-size: 12px;
+      color: var(--ink-soft);
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-s);
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+
+    .mini-btn:hover {
+      color: var(--ink);
+      border-color: var(--ink-faint);
+    }
+
+    .mini-btn.copied {
+      color: var(--stamp);
+      border-color: var(--stamp);
+    }
+
+    /* Rendered view */
+    #renderFrame {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      display: block;
+      background: #fff;
+    }
+
+    .plain-fallback {
+      padding: 24px 26px;
+      white-space: pre-wrap;
+      font-family: var(--sans);
+      font-size: 14.5px;
+      line-height: 1.6;
+      color: var(--ink);
+    }
+
+    .attach-section {
+      border-top: 1px solid var(--line-soft);
+      padding: 14px 16px 16px;
+    }
+
+    .attach-section .lbl {
+      font-size: 11px;
+      text-transform: none;
+      color: var(--ink-faint);
+      margin-bottom: 8px;
+    }
+
+    .attach-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .attach-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-2);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-s);
+      padding: 7px 10px;
+      text-decoration: none;
+      color: var(--ink);
+      font-size: 12.5px;
+      max-width: 240px;
+    }
+
+    .attach-chip:hover {
+      border-color: var(--accent);
+    }
+
+    .attach-chip .paperclip {
+      flex-shrink: 0;
+      color: var(--ink-faint);
+    }
+
+    .attach-chip .meta {
+      overflow: hidden;
+    }
+
+    .attach-chip .fname {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: block;
+    }
+
+    .attach-chip .fsize {
+      color: var(--ink-faint);
+      font-size: 11px;
+    }
+
+    /* Raw code view */
+    .code-view {
+      display: flex;
+      max-height: 560px;
+      overflow: auto;
+      font-family: var(--mono);
+      font-size: 12.5px;
+      line-height: 1.6;
+      background: var(--mono-bg);
+      color: var(--mono-ink);
+      border-radius: 0 0 6px 6px;
+    }
+
+    .code-view .lines {
+      padding: 14px 10px;
+      text-align: right;
+      color: var(--mono-line);
+      user-select: none;
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+      flex-shrink: 0;
+    }
+
+    .code-view pre {
+      margin: 0;
+      padding: 14px 16px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      flex: 1;
+    }
+
+    .html-view {
+      max-height: 560px;
+      overflow: auto;
+    }
+
+    .html-view pre {
+      margin: 0;
+      padding: 18px 20px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: var(--mono);
+      font-size: 12.5px;
+      line-height: 1.6;
+      color: var(--ink);
+    }
+
+    .empty-note {
+      padding: 40px 26px;
+      color: var(--ink-faint);
+      font-size: 13.5px;
+      text-align: center;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 30px;
+      font-size: 11.5px;
+      color: var(--ink-faint);
+    }
+
+    @media (max-width: 560px) {
+      .masthead {
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .masthead .tag {
+        text-align: left;
+        max-width: none;
+      }
+
+      .field-row .k {
+        width: 48px;
+      }
+
+      #renderFrame {
+        height: 420px;
+      }
+    }
+  </style>
 </head>
+
 <body>
-<div class="wrap">
+  <div class="wrap">
 
-  <div class="masthead">
-    <h1>Visor EML</h1>
-    <div class="tag">Subí un archivo .eml para ver el correo renderizado, su código fuente o el HTML limpio.</div>
+    <div class="masthead">
+      <h1>Eml Magic Viewer</h1>
+      <div class="tag">Subí un archivo .eml para ver el correo renderizado, su código fuente o el HTML limpio.</div>
+    </div>
+
+    <!-- DROP SCREEN -->
+    <div class="drop-screen" id="dropScreen">
+      <label class="envelope" id="envelope" for="fileInput">
+        <svg viewBox="0 0 560 350" preserveAspectRatio="none">
+          <polygon class="flap" points="20,20 280,175 540,20"></polygon>
+          <line class="flap" x1="20" y1="20" x2="20" y2="330"></line>
+          <line class="flap" x1="540" y1="20" x2="540" y2="330"></line>
+          <line class="flap" x1="20" y1="330" x2="540" y2="330"></line>
+          <line class="flap" x1="20" y1="20" x2="540" y2="20"></line>
+        </svg>
+        <div class="drop-copy">
+          <div class="cta">Soltá tu archivo .eml acá</div>
+          <div class="sub">o hacé clic para elegirlo</div>
+        </div>
+      </label>
+      <input type="file" id="fileInput" accept=".eml,message/rfc822,.txt">
+      <div class="privacy-note"><span class="dot"></span>Todo se procesa en tu navegador. El archivo nunca se sube a
+        ningún servidor.</div>
+      <div class="error-box" id="errorBox"></div>
+    </div>
+
+    <!-- APP SCREEN -->
+    <div class="app-screen" id="appScreen">
+
+      <div class="letter-card">
+        <div class="stamp" id="stampDate">—</div>
+        <div class="field-row">
+          <div class="k">De</div>
+          <div class="v" id="fFrom">—</div>
+        </div>
+        <div class="field-row">
+          <div class="k">Para</div>
+          <div class="v" id="fTo">—</div>
+        </div>
+        <div class="field-row" id="ccRow" style="display:none">
+          <div class="k">Cc</div>
+          <div class="v" id="fCc">—</div>
+        </div>
+        <div class="field-row">
+          <div class="k">Fecha</div>
+          <div class="v" id="fDate">—</div>
+        </div>
+        <div class="field-row">
+          <div class="k">Asunto</div>
+          <div class="v subject" id="fSubject">—</div>
+        </div>
+
+        <div class="toolbar-row">
+          <span style="font-size:12px; color:var(--ink-faint)" id="fileNameLabel"></span>
+          <button class="new-file-btn" id="loadAnotherBtn">Cargar otro archivo</button>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="rendered">Vista previa</button>
+        <button class="tab-btn" data-tab="raw">Código EML</button>
+        <button class="tab-btn" data-tab="clean">HTML limpio</button>
+      </div>
+
+      <!-- Rendered -->
+      <div class="panel active" id="panel-rendered">
+        <iframe id="renderFrame" sandbox="allow-popups allow-popups-to-escape-sandbox"></iframe>
+        <div class="attach-section" id="attachSection" style="display:none">
+          <div class="lbl">Adjuntos</div>
+          <div class="attach-list" id="attachList"></div>
+        </div>
+      </div>
+
+      <!-- Raw EML -->
+      <div class="panel" id="panel-raw">
+        <div class="panel-toolbar">
+          <button class="mini-btn" id="copyRawBtn">Copiar</button>
+          <button class="mini-btn" id="downloadRawBtn">Descargar .eml</button>
+        </div>
+        <div class="code-view">
+          <div class="lines" id="rawLines"></div>
+          <pre id="rawCode"></pre>
+        </div>
+      </div>
+
+      <!-- Clean HTML -->
+      <div class="panel" id="panel-clean">
+        <div class="panel-toolbar">
+          <button class="mini-btn" id="copyCleanBtn">Copiar</button>
+          <button class="mini-btn" id="downloadCleanBtn">Descargar .html</button>
+        </div>
+        <div class="html-view">
+          <pre id="cleanCode"></pre>
+        </div>
+      </div>
+
+    </div>
+
+    <footer>Visor EML &middot; funciona completamente en el navegador, sin conexión a servidores externos.</footer>
   </div>
 
-  <!-- DROP SCREEN -->
-  <div class="drop-screen" id="dropScreen">
-    <label class="envelope" id="envelope" for="fileInput">
-      <svg viewBox="0 0 560 350" preserveAspectRatio="none">
-        <polygon class="flap" points="20,20 280,175 540,20"></polygon>
-        <line class="flap" x1="20" y1="20" x2="20" y2="330"></line>
-        <line class="flap" x1="540" y1="20" x2="540" y2="330"></line>
-        <line class="flap" x1="20" y1="330" x2="540" y2="330"></line>
-        <line class="flap" x1="20" y1="20" x2="540" y2="20"></line>
-      </svg>
-      <div class="drop-copy">
-        <div class="cta">Soltá tu archivo .eml acá</div>
-        <div class="sub">o hacé clic para elegirlo</div>
-      </div>
-    </label>
-    <input type="file" id="fileInput" accept=".eml,message/rfc822,.txt">
-    <div class="privacy-note"><span class="dot"></span>Todo se procesa en tu navegador. El archivo nunca se sube a ningún servidor.</div>
-    <div class="error-box" id="errorBox"></div>
-  </div>
+  <script>
+    (function () {
 
-  <!-- APP SCREEN -->
-  <div class="app-screen" id="appScreen">
+      /* ============================================================
+         MIME / EML PARSING UTILITIES
+         ============================================================ */
 
-    <div class="letter-card">
-      <div class="stamp" id="stampDate">—</div>
-      <div class="field-row"><div class="k">De</div><div class="v" id="fFrom">—</div></div>
-      <div class="field-row"><div class="k">Para</div><div class="v" id="fTo">—</div></div>
-      <div class="field-row" id="ccRow" style="display:none"><div class="k">Cc</div><div class="v" id="fCc">—</div></div>
-      <div class="field-row"><div class="k">Fecha</div><div class="v" id="fDate">—</div></div>
-      <div class="field-row"><div class="k">Asunto</div><div class="v subject" id="fSubject">—</div></div>
-
-      <div class="toolbar-row">
-        <span style="font-size:12px; color:var(--ink-faint)" id="fileNameLabel"></span>
-        <button class="new-file-btn" id="loadAnotherBtn">Cargar otro archivo</button>
-      </div>
-    </div>
-
-    <div class="tabs">
-      <button class="tab-btn active" data-tab="rendered">Vista previa</button>
-      <button class="tab-btn" data-tab="raw">Código EML</button>
-      <button class="tab-btn" data-tab="clean">HTML limpio</button>
-    </div>
-
-    <!-- Rendered -->
-    <div class="panel active" id="panel-rendered">
-      <iframe id="renderFrame" sandbox="allow-popups allow-popups-to-escape-sandbox"></iframe>
-      <div class="attach-section" id="attachSection" style="display:none">
-        <div class="lbl">Adjuntos</div>
-        <div class="attach-list" id="attachList"></div>
-      </div>
-    </div>
-
-    <!-- Raw EML -->
-    <div class="panel" id="panel-raw">
-      <div class="panel-toolbar">
-        <button class="mini-btn" id="copyRawBtn">Copiar</button>
-        <button class="mini-btn" id="downloadRawBtn">Descargar .eml</button>
-      </div>
-      <div class="code-view">
-        <div class="lines" id="rawLines"></div>
-        <pre id="rawCode"></pre>
-      </div>
-    </div>
-
-    <!-- Clean HTML -->
-    <div class="panel" id="panel-clean">
-      <div class="panel-toolbar">
-        <button class="mini-btn" id="copyCleanBtn">Copiar</button>
-        <button class="mini-btn" id="downloadCleanBtn">Descargar .html</button>
-      </div>
-      <div class="html-view">
-        <pre id="cleanCode"></pre>
-      </div>
-    </div>
-
-  </div>
-
-  <footer>Visor EML &middot; funciona completamente en el navegador, sin conexión a servidores externos.</footer>
-</div>
-
-<script>
-(function(){
-
-  /* ============================================================
-     MIME / EML PARSING UTILITIES
-     ============================================================ */
-
-  function splitHeaderBody(str){
-    let idx = str.indexOf('\r\n\r\n');
-    let sepLen = 4;
-    if (idx === -1){ idx = str.indexOf('\n\n'); sepLen = 2; }
-    if (idx === -1){ return {headerRaw: str, body: ''}; }
-    return {headerRaw: str.slice(0, idx), body: str.slice(idx + sepLen)};
-  }
-
-  function unfoldHeaders(headerRaw){
-    const rawLines = headerRaw.split(/\r\n|\n/);
-    const lines = [];
-    for (const line of rawLines){
-      if (/^[ \t]/.test(line) && lines.length){
-        lines[lines.length-1] += ' ' + line.replace(/^[ \t]+/, '');
-      } else if (line.trim() !== ''){
-        lines.push(line);
+      function splitHeaderBody(str) {
+        let idx = str.indexOf('\r\n\r\n');
+        let sepLen = 4;
+        if (idx === -1) { idx = str.indexOf('\n\n'); sepLen = 2; }
+        if (idx === -1) { return { headerRaw: str, body: '' }; }
+        return { headerRaw: str.slice(0, idx), body: str.slice(idx + sepLen) };
       }
-    }
-    const headers = [];
-    for (const line of lines){
-      const m = line.match(/^([^:]+):\s*([\s\S]*)$/);
-      if (m) headers.push({name: m[1].trim().toLowerCase(), rawName: m[1].trim(), value: m[2]});
-    }
-    return headers;
-  }
 
-  function getHeader(headers, name){
-    const h = headers.find(h => h.name === name.toLowerCase());
-    return h ? h.value : null;
-  }
-
-  function base64ToBytes(b64){
-    const clean = (b64 || '').replace(/[^A-Za-z0-9+/=]/g, '');
-    let bin;
-    try { bin = atob(clean); } catch(e){ bin = ''; }
-    const bytes = new Uint8Array(bin.length);
-    for (let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
-    return bytes;
-  }
-
-  function bytesToBase64(bytes){
-    let bin = '';
-    const chunk = 8192;
-    for (let i=0;i<bytes.length;i+=chunk){
-      bin += String.fromCharCode.apply(null, bytes.subarray(i, i+chunk));
-    }
-    return btoa(bin);
-  }
-
-  function quotedPrintableToBytes(str){
-    const bytes = [];
-    for (let i=0;i<str.length;i++){
-      const c = str[i];
-      if (c === '='){
-        if (str[i+1] === '\r' && str[i+2] === '\n'){ i += 2; continue; }
-        if (str[i+1] === '\n'){ i += 1; continue; }
-        const hex = str.substr(i+1, 2);
-        if (/^[0-9A-Fa-f]{2}$/.test(hex)){ bytes.push(parseInt(hex,16)); i += 2; }
-        else bytes.push(c.charCodeAt(0));
-      } else {
-        bytes.push(c.charCodeAt(0) & 0xFF);
+      function unfoldHeaders(headerRaw) {
+        const rawLines = headerRaw.split(/\r\n|\n/);
+        const lines = [];
+        for (const line of rawLines) {
+          if (/^[ \t]/.test(line) && lines.length) {
+            lines[lines.length - 1] += ' ' + line.replace(/^[ \t]+/, '');
+          } else if (line.trim() !== '') {
+            lines.push(line);
+          }
+        }
+        const headers = [];
+        for (const line of lines) {
+          const m = line.match(/^([^:]+):\s*([\s\S]*)$/);
+          if (m) headers.push({ name: m[1].trim().toLowerCase(), rawName: m[1].trim(), value: m[2] });
+        }
+        return headers;
       }
-    }
-    return new Uint8Array(bytes);
-  }
 
-  function bytesToText(bytes, charset){
-    let cs = (charset || 'utf-8').trim().toLowerCase().replace(/^"|"$/g, '');
-    const aliases = {'ascii':'windows-1252', 'us-ascii':'windows-1252', 'unicode-1-1-utf-7':'utf-8', 'cp1252':'windows-1252'};
-    cs = aliases[cs] || cs;
-    try { return new TextDecoder(cs).decode(bytes); }
-    catch(e){
-      try { return new TextDecoder('utf-8').decode(bytes); }
-      catch(e2){ let s=''; for (const b of bytes) s += String.fromCharCode(b); return s; }
-    }
-  }
+      function getHeader(headers, name) {
+        const h = headers.find(h => h.name === name.toLowerCase());
+        return h ? h.value : null;
+      }
 
-  function decodeEncodedWords(str){
-    if (!str) return str;
-    return str
-      .replace(/(=\?[^?]+\?[BbQq]\?[^?]*\?=)(\s+(?==\?))/g, '$1')
-      .replace(/=\?([^?]+)\?([BbQq])\?([^?]*)\?=/g, (m, charset, enc, text) => {
-        try {
-          let bytes;
-          if (enc.toUpperCase() === 'B') bytes = base64ToBytes(text);
-          else { text = text.replace(/_/g, ' '); bytes = quotedPrintableToBytes(text); }
-          return bytesToText(bytes, charset);
-        } catch(e){ return m; }
+      function base64ToBytes(b64) {
+        const clean = (b64 || '').replace(/[^A-Za-z0-9+/=]/g, '');
+        let bin;
+        try { bin = atob(clean); } catch (e) { bin = ''; }
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        return bytes;
+      }
+
+      function bytesToBase64(bytes) {
+        let bin = '';
+        const chunk = 8192;
+        for (let i = 0; i < bytes.length; i += chunk) {
+          bin += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+        }
+        return btoa(bin);
+      }
+
+      function quotedPrintableToBytes(str) {
+        const bytes = [];
+        for (let i = 0; i < str.length; i++) {
+          const c = str[i];
+          if (c === '=') {
+            if (str[i + 1] === '\r' && str[i + 2] === '\n') { i += 2; continue; }
+            if (str[i + 1] === '\n') { i += 1; continue; }
+            const hex = str.substr(i + 1, 2);
+            if (/^[0-9A-Fa-f]{2}$/.test(hex)) { bytes.push(parseInt(hex, 16)); i += 2; }
+            else bytes.push(c.charCodeAt(0));
+          } else {
+            bytes.push(c.charCodeAt(0) & 0xFF);
+          }
+        }
+        return new Uint8Array(bytes);
+      }
+
+      function bytesToText(bytes, charset) {
+        let cs = (charset || 'utf-8').trim().toLowerCase().replace(/^"|"$/g, '');
+        const aliases = { 'ascii': 'windows-1252', 'us-ascii': 'windows-1252', 'unicode-1-1-utf-7': 'utf-8', 'cp1252': 'windows-1252' };
+        cs = aliases[cs] || cs;
+        try { return new TextDecoder(cs).decode(bytes); }
+        catch (e) {
+          try { return new TextDecoder('utf-8').decode(bytes); }
+          catch (e2) { let s = ''; for (const b of bytes) s += String.fromCharCode(b); return s; }
+        }
+      }
+
+      function decodeEncodedWords(str) {
+        if (!str) return str;
+        return str
+          .replace(/(=\?[^?]+\?[BbQq]\?[^?]*\?=)(\s+(?==\?))/g, '$1')
+          .replace(/=\?([^?]+)\?([BbQq])\?([^?]*)\?=/g, (m, charset, enc, text) => {
+            try {
+              let bytes;
+              if (enc.toUpperCase() === 'B') bytes = base64ToBytes(text);
+              else { text = text.replace(/_/g, ' '); bytes = quotedPrintableToBytes(text); }
+              return bytesToText(bytes, charset);
+            } catch (e) { return m; }
+          });
+      }
+
+      function parseContentType(value) {
+        const parts = value.split(';');
+        const full = parts[0].trim().toLowerCase();
+        const bits = full.split('/');
+        const params = {};
+        for (let i = 1; i < parts.length; i++) {
+          const m = parts[i].match(/^\s*([^=]+)=\s*([\s\S]*?)\s*$/);
+          if (m) {
+            let key = m[1].trim().toLowerCase();
+            let val = m[2].trim().replace(/^"|"$/g, '');
+            params[key] = val;
+          }
+        }
+        return { type: bits[0] || 'text', subtype: bits[1] || 'plain', full, params };
+      }
+
+      function parseContentDisposition(value) {
+        const parts = value.split(';');
+        const disposition = parts[0].trim().toLowerCase();
+        const params = {};
+        for (let i = 1; i < parts.length; i++) {
+          const m = parts[i].match(/^\s*([^=]+)=\s*([\s\S]*?)\s*$/);
+          if (m) {
+            let key = m[1].trim().toLowerCase();
+            let val = m[2].trim().replace(/^"|"$/g, '');
+            params[key] = val;
+          }
+        }
+        return { disposition, params };
+      }
+
+      function decodeBodyBytes(bodyStr, cte) {
+        cte = (cte || '7bit').trim().toLowerCase();
+        if (cte === 'base64') return base64ToBytes(bodyStr);
+        if (cte === 'quoted-printable') return quotedPrintableToBytes(bodyStr);
+        const bytes = new Uint8Array(bodyStr.length);
+        for (let i = 0; i < bodyStr.length; i++) bytes[i] = bodyStr.charCodeAt(i) & 0xFF;
+        return bytes;
+      }
+
+      function splitByBoundary(body, boundary) {
+        const delim = '--' + boundary;
+        const segments = body.split(delim);
+        const parts = [];
+        for (let i = 1; i < segments.length - 1; i++) {
+          let seg = segments[i];
+          seg = seg.replace(/^\r?\n/, '');
+          seg = seg.replace(/\r?\n$/, '');
+          if (seg.trim().length) parts.push(seg);
+        }
+        return parts;
+      }
+
+      function parseMimePart(rawBinaryStr) {
+        const { headerRaw, body } = splitHeaderBody(rawBinaryStr);
+        const headers = unfoldHeaders(headerRaw);
+        const ctRaw = getHeader(headers, 'content-type') || 'text/plain; charset=us-ascii';
+        const ct = parseContentType(ctRaw);
+        const cte = (getHeader(headers, 'content-transfer-encoding') || '7bit').trim().toLowerCase();
+        const cdRaw = getHeader(headers, 'content-disposition');
+        const cd = cdRaw ? parseContentDisposition(cdRaw) : null;
+        const cidRaw = getHeader(headers, 'content-id');
+        const node = {
+          headers, contentType: ct, cte, disposition: cd,
+          contentId: cidRaw ? cidRaw.replace(/[<>]/g, '') : null,
+          children: [], bytes: null
+        };
+        if (ct.type === 'multipart' && ct.params.boundary) {
+          node.children = splitByBoundary(body, ct.params.boundary).map(parseMimePart);
+          if (!node.children.length) {
+            // malformed boundary, fall back to treating as plain text
+            node.bytes = decodeBodyBytes(body, cte);
+          }
+        } else {
+          node.bytes = decodeBodyBytes(body, cte);
+        }
+        return node;
+      }
+
+      function flattenLeaves(node, list) {
+        list = list || [];
+        if (node.children && node.children.length) {
+          for (const c of node.children) flattenLeaves(c, list);
+        } else {
+          list.push(node);
+        }
+        return list;
+      }
+
+      function splitAddressList(str) {
+        if (!str) return [];
+        const result = [];
+        let current = '';
+        let inQuotes = false;
+        for (let i = 0; i < str.length; i++) {
+          const c = str[i];
+          if (c === '"') inQuotes = !inQuotes;
+          if (c === ',' && !inQuotes) { result.push(current.trim()); current = ''; }
+          else current += c;
+        }
+        if (current.trim()) result.push(current.trim());
+        return result.map(decodeEncodedWords);
+      }
+
+      function escapeHtml(str) {
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      }
+
+      function formatBytes(n) {
+        if (n < 1024) return n + ' B';
+        if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+        return (n / (1024 * 1024)).toFixed(1) + ' MB';
+      }
+
+      function guessExtFromMime(mime) {
+        const map = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/gif': 'gif', 'application/pdf': 'pdf', 'text/plain': 'txt', 'text/html': 'html', 'application/zip': 'zip' };
+        return map[mime] || 'bin';
+      }
+
+      /* ============================================================
+         MAIN PARSE: raw file text -> structured message
+         ============================================================ */
+
+      function parseEmlFromBinaryString(binStr) {
+        const tree = parseMimePart(binStr);
+        const { headerRaw } = splitHeaderBody(binStr);
+        const topHeaders = unfoldHeaders(headerRaw);
+
+        const leaves = flattenLeaves(tree);
+
+        const htmlLeaf = leaves.find(l => l.contentType.full === 'text/html');
+        const textLeaf = leaves.find(l => l.contentType.full === 'text/plain');
+
+        let htmlContent = null;
+        if (htmlLeaf) {
+          htmlContent = bytesToText(htmlLeaf.bytes, htmlLeaf.contentType.params.charset);
+        }
+        let textContent = null;
+        if (textLeaf) {
+          textContent = bytesToText(textLeaf.bytes, textLeaf.contentType.params.charset);
+        }
+
+        // Inline images referenced by cid:
+        const cidMap = {};
+        for (const leaf of leaves) {
+          if (leaf.contentId && leaf !== htmlLeaf && leaf !== textLeaf) {
+            const mime = leaf.contentType.full || 'application/octet-stream';
+            cidMap[leaf.contentId] = 'data:' + mime + ';base64,' + bytesToBase64(leaf.bytes);
+          }
+        }
+        if (htmlContent) {
+          htmlContent = htmlContent.replace(/cid:([^"'\)\s]+)/g, (m, cid) => {
+            const key = cid.trim();
+            return cidMap[key] !== undefined ? cidMap[key] : m;
+          });
+        }
+
+        // Attachments: any leaf that isn't the chosen html/text body and isn't a referenced inline image
+        const referencedCids = new Set(Object.keys(cidMap).filter(cid => {
+          return htmlLeaf && bytesToText(htmlLeaf.bytes, htmlLeaf.contentType.params.charset).indexOf('cid:' + cid) !== -1;
+        }));
+        const attachments = leaves.filter(leaf => {
+          if (leaf === htmlLeaf || leaf === textLeaf) return false;
+          if (leaf.contentId && referencedCids.has(leaf.contentId)) return false;
+          return true;
+        }).map(leaf => {
+          const fname = decodeEncodedWords(
+            (leaf.disposition && leaf.disposition.params.filename) ||
+            leaf.contentType.params.name ||
+            ('adjunto.' + guessExtFromMime(leaf.contentType.full))
+          );
+          return {
+            filename: fname,
+            mime: leaf.contentType.full || 'application/octet-stream',
+            bytes: leaf.bytes,
+            size: leaf.bytes.length
+          };
+        });
+
+        const from = decodeEncodedWords(getHeader(topHeaders, 'from') || '');
+        const to = splitAddressList(getHeader(topHeaders, 'to') || '');
+        const cc = splitAddressList(getHeader(topHeaders, 'cc') || '');
+        const subject = decodeEncodedWords(getHeader(topHeaders, 'subject') || '(sin asunto)');
+        const dateRaw = getHeader(topHeaders, 'date');
+        let dateObj = null;
+        if (dateRaw) { const d = new Date(dateRaw); if (!isNaN(d.getTime())) dateObj = d; }
+
+        return {
+          topHeaders, from, to, cc, subject, dateRaw, dateObj,
+          htmlContent, textContent, attachments, tree
+        };
+      }
+
+      /* ============================================================
+         FILE HANDLING
+         ============================================================ */
+
+      const dropScreen = document.getElementById('dropScreen');
+      const appScreen = document.getElementById('appScreen');
+      const envelope = document.getElementById('envelope');
+      const fileInput = document.getElementById('fileInput');
+      const errorBox = document.getElementById('errorBox');
+
+      let currentFile = null;
+      let currentRawText = '';
+      let currentParsed = null;
+
+      function showError(msg) {
+        errorBox.textContent = msg;
+        errorBox.style.display = 'block';
+      }
+      function clearError() {
+        errorBox.style.display = 'none';
+        errorBox.textContent = '';
+      }
+
+      ['dragenter', 'dragover'].forEach(evt => {
+        envelope.addEventListener(evt, e => { e.preventDefault(); envelope.classList.add('drag'); });
       });
-  }
-
-  function parseContentType(value){
-    const parts = value.split(';');
-    const full = parts[0].trim().toLowerCase();
-    const bits = full.split('/');
-    const params = {};
-    for (let i=1;i<parts.length;i++){
-      const m = parts[i].match(/^\s*([^=]+)=\s*([\s\S]*?)\s*$/);
-      if (m){
-        let key = m[1].trim().toLowerCase();
-        let val = m[2].trim().replace(/^"|"$/g, '');
-        params[key] = val;
-      }
-    }
-    return {type: bits[0] || 'text', subtype: bits[1] || 'plain', full, params};
-  }
-
-  function parseContentDisposition(value){
-    const parts = value.split(';');
-    const disposition = parts[0].trim().toLowerCase();
-    const params = {};
-    for (let i=1;i<parts.length;i++){
-      const m = parts[i].match(/^\s*([^=]+)=\s*([\s\S]*?)\s*$/);
-      if (m){
-        let key = m[1].trim().toLowerCase();
-        let val = m[2].trim().replace(/^"|"$/g, '');
-        params[key] = val;
-      }
-    }
-    return {disposition, params};
-  }
-
-  function decodeBodyBytes(bodyStr, cte){
-    cte = (cte || '7bit').trim().toLowerCase();
-    if (cte === 'base64') return base64ToBytes(bodyStr);
-    if (cte === 'quoted-printable') return quotedPrintableToBytes(bodyStr);
-    const bytes = new Uint8Array(bodyStr.length);
-    for (let i=0;i<bodyStr.length;i++) bytes[i] = bodyStr.charCodeAt(i) & 0xFF;
-    return bytes;
-  }
-
-  function splitByBoundary(body, boundary){
-    const delim = '--' + boundary;
-    const segments = body.split(delim);
-    const parts = [];
-    for (let i=1;i<segments.length-1;i++){
-      let seg = segments[i];
-      seg = seg.replace(/^\r?\n/, '');
-      seg = seg.replace(/\r?\n$/, '');
-      if (seg.trim().length) parts.push(seg);
-    }
-    return parts;
-  }
-
-  function parseMimePart(rawBinaryStr){
-    const {headerRaw, body} = splitHeaderBody(rawBinaryStr);
-    const headers = unfoldHeaders(headerRaw);
-    const ctRaw = getHeader(headers, 'content-type') || 'text/plain; charset=us-ascii';
-    const ct = parseContentType(ctRaw);
-    const cte = (getHeader(headers, 'content-transfer-encoding') || '7bit').trim().toLowerCase();
-    const cdRaw = getHeader(headers, 'content-disposition');
-    const cd = cdRaw ? parseContentDisposition(cdRaw) : null;
-    const cidRaw = getHeader(headers, 'content-id');
-    const node = {
-      headers, contentType: ct, cte, disposition: cd,
-      contentId: cidRaw ? cidRaw.replace(/[<>]/g, '') : null,
-      children: [], bytes: null
-    };
-    if (ct.type === 'multipart' && ct.params.boundary){
-      node.children = splitByBoundary(body, ct.params.boundary).map(parseMimePart);
-      if (!node.children.length){
-        // malformed boundary, fall back to treating as plain text
-        node.bytes = decodeBodyBytes(body, cte);
-      }
-    } else {
-      node.bytes = decodeBodyBytes(body, cte);
-    }
-    return node;
-  }
-
-  function flattenLeaves(node, list){
-    list = list || [];
-    if (node.children && node.children.length){
-      for (const c of node.children) flattenLeaves(c, list);
-    } else {
-      list.push(node);
-    }
-    return list;
-  }
-
-  function splitAddressList(str){
-    if (!str) return [];
-    const result = [];
-    let current = '';
-    let inQuotes = false;
-    for (let i=0;i<str.length;i++){
-      const c = str[i];
-      if (c === '"') inQuotes = !inQuotes;
-      if (c === ',' && !inQuotes){ result.push(current.trim()); current=''; }
-      else current += c;
-    }
-    if (current.trim()) result.push(current.trim());
-    return result.map(decodeEncodedWords);
-  }
-
-  function escapeHtml(str){
-    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-
-  function formatBytes(n){
-    if (n < 1024) return n + ' B';
-    if (n < 1024*1024) return (n/1024).toFixed(1) + ' KB';
-    return (n/(1024*1024)).toFixed(1) + ' MB';
-  }
-
-  function guessExtFromMime(mime){
-    const map = {'image/png':'png','image/jpeg':'jpg','image/gif':'gif','application/pdf':'pdf','text/plain':'txt','text/html':'html','application/zip':'zip'};
-    return map[mime] || 'bin';
-  }
-
-  /* ============================================================
-     MAIN PARSE: raw file text -> structured message
-     ============================================================ */
-
-  function parseEmlFromBinaryString(binStr){
-    const tree = parseMimePart(binStr);
-    const {headerRaw} = splitHeaderBody(binStr);
-    const topHeaders = unfoldHeaders(headerRaw);
-
-    const leaves = flattenLeaves(tree);
-
-    const htmlLeaf = leaves.find(l => l.contentType.full === 'text/html');
-    const textLeaf = leaves.find(l => l.contentType.full === 'text/plain');
-
-    let htmlContent = null;
-    if (htmlLeaf){
-      htmlContent = bytesToText(htmlLeaf.bytes, htmlLeaf.contentType.params.charset);
-    }
-    let textContent = null;
-    if (textLeaf){
-      textContent = bytesToText(textLeaf.bytes, textLeaf.contentType.params.charset);
-    }
-
-    // Inline images referenced by cid:
-    const cidMap = {};
-    for (const leaf of leaves){
-      if (leaf.contentId && leaf !== htmlLeaf && leaf !== textLeaf){
-        const mime = leaf.contentType.full || 'application/octet-stream';
-        cidMap[leaf.contentId] = 'data:' + mime + ';base64,' + bytesToBase64(leaf.bytes);
-      }
-    }
-    if (htmlContent){
-      htmlContent = htmlContent.replace(/cid:([^"'\)\s]+)/g, (m, cid) => {
-        const key = cid.trim();
-        return cidMap[key] !== undefined ? cidMap[key] : m;
+      ['dragleave', 'drop'].forEach(evt => {
+        envelope.addEventListener(evt, e => { e.preventDefault(); envelope.classList.remove('drag'); });
       });
-    }
+      envelope.addEventListener('drop', e => {
+        const f = e.dataTransfer.files && e.dataTransfer.files[0];
+        if (f) handleFile(f);
+      });
+      fileInput.addEventListener('change', e => {
+        const f = e.target.files && e.target.files[0];
+        if (f) handleFile(f);
+      });
 
-    // Attachments: any leaf that isn't the chosen html/text body and isn't a referenced inline image
-    const referencedCids = new Set(Object.keys(cidMap).filter(cid => {
-      return htmlLeaf && bytesToText(htmlLeaf.bytes, htmlLeaf.contentType.params.charset).indexOf('cid:' + cid) !== -1;
-    }));
-    const attachments = leaves.filter(leaf => {
-      if (leaf === htmlLeaf || leaf === textLeaf) return false;
-      if (leaf.contentId && referencedCids.has(leaf.contentId)) return false;
-      return true;
-    }).map(leaf => {
-      const fname = decodeEncodedWords(
-        (leaf.disposition && leaf.disposition.params.filename) ||
-        leaf.contentType.params.name ||
-        ('adjunto.' + guessExtFromMime(leaf.contentType.full))
-      );
-      return {
-        filename: fname,
-        mime: leaf.contentType.full || 'application/octet-stream',
-        bytes: leaf.bytes,
-        size: leaf.bytes.length
-      };
-    });
+      function handleFile(file) {
+        clearError();
+        currentFile = file;
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const arrayBuf = e.target.result;
+          const bytes = new Uint8Array(arrayBuf);
 
-    const from = decodeEncodedWords(getHeader(topHeaders, 'from') || '');
-    const to = splitAddressList(getHeader(topHeaders, 'to') || '');
-    const cc = splitAddressList(getHeader(topHeaders, 'cc') || '');
-    const subject = decodeEncodedWords(getHeader(topHeaders, 'subject') || '(sin asunto)');
-    const dateRaw = getHeader(topHeaders, 'date');
-    let dateObj = null;
-    if (dateRaw){ const d = new Date(dateRaw); if (!isNaN(d.getTime())) dateObj = d; }
+          // binary string (1 byte = 1 char) for structural parsing
+          let binStr = '';
+          const chunk = 8192;
+          for (let i = 0; i < bytes.length; i += chunk) {
+            binStr += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+          }
 
-    return {
-      topHeaders, from, to, cc, subject, dateRaw, dateObj,
-      htmlContent, textContent, attachments, tree
-    };
-  }
+          // best-effort UTF-8 decode of whole file for the raw-source display
+          let displayText;
+          try { displayText = new TextDecoder('utf-8', { fatal: false }).decode(bytes); }
+          catch (err) { displayText = binStr; }
 
-  /* ============================================================
-     FILE HANDLING
-     ============================================================ */
+          currentRawText = displayText;
 
-  const dropScreen = document.getElementById('dropScreen');
-  const appScreen = document.getElementById('appScreen');
-  const envelope = document.getElementById('envelope');
-  const fileInput = document.getElementById('fileInput');
-  const errorBox = document.getElementById('errorBox');
-
-  let currentFile = null;
-  let currentRawText = '';
-  let currentParsed = null;
-
-  function showError(msg){
-    errorBox.textContent = msg;
-    errorBox.style.display = 'block';
-  }
-  function clearError(){
-    errorBox.style.display = 'none';
-    errorBox.textContent = '';
-  }
-
-  ['dragenter','dragover'].forEach(evt => {
-    envelope.addEventListener(evt, e => { e.preventDefault(); envelope.classList.add('drag'); });
-  });
-  ['dragleave','drop'].forEach(evt => {
-    envelope.addEventListener(evt, e => { e.preventDefault(); envelope.classList.remove('drag'); });
-  });
-  envelope.addEventListener('drop', e => {
-    const f = e.dataTransfer.files && e.dataTransfer.files[0];
-    if (f) handleFile(f);
-  });
-  fileInput.addEventListener('change', e => {
-    const f = e.target.files && e.target.files[0];
-    if (f) handleFile(f);
-  });
-
-  function handleFile(file){
-    clearError();
-    currentFile = file;
-    const reader = new FileReader();
-    reader.onload = function(e){
-      const arrayBuf = e.target.result;
-      const bytes = new Uint8Array(arrayBuf);
-
-      // binary string (1 byte = 1 char) for structural parsing
-      let binStr = '';
-      const chunk = 8192;
-      for (let i=0;i<bytes.length;i+=chunk){
-        binStr += String.fromCharCode.apply(null, bytes.subarray(i, i+chunk));
+          try {
+            currentParsed = parseEmlFromBinaryString(binStr);
+            renderApp(currentParsed, file.name, displayText, bytes);
+          } catch (err) {
+            console.error(err);
+            showError('No se pudo interpretar el archivo como un EML válido (' + err.message + '). Verificá que sea un archivo .eml exportado correctamente.');
+          }
+        };
+        reader.onerror = function () {
+          showError('No se pudo leer el archivo.');
+        };
+        reader.readAsArrayBuffer(file);
       }
 
-      // best-effort UTF-8 decode of whole file for the raw-source display
-      let displayText;
-      try { displayText = new TextDecoder('utf-8', {fatal:false}).decode(bytes); }
-      catch(err){ displayText = binStr; }
+      /* ============================================================
+         RENDER UI
+         ============================================================ */
 
-      currentRawText = displayText;
+      function renderApp(parsed, fileName, rawText, origBytes) {
+        dropScreen.style.display = 'none';
+        appScreen.style.display = 'block';
 
-      try {
-        currentParsed = parseEmlFromBinaryString(binStr);
-        renderApp(currentParsed, file.name, displayText, bytes);
-      } catch(err){
-        console.error(err);
-        showError('No se pudo interpretar el archivo como un EML válido (' + err.message + '). Verificá que sea un archivo .eml exportado correctamente.');
+        document.getElementById('fileNameLabel').textContent = fileName;
+
+        document.getElementById('fFrom').innerHTML = parsed.from ? escapeHtml(parsed.from) : '<span style="color:var(--ink-faint)">—</span>';
+        document.getElementById('fTo').innerHTML = parsed.to.length
+          ? parsed.to.map(a => '<span class="addr-chip">' + escapeHtml(a) + '</span>').join('')
+          : '<span style="color:var(--ink-faint)">—</span>';
+
+        if (parsed.cc.length) {
+          document.getElementById('ccRow').style.display = 'flex';
+          document.getElementById('fCc').innerHTML = parsed.cc.map(a => '<span class="addr-chip">' + escapeHtml(a) + '</span>').join('');
+        } else {
+          document.getElementById('ccRow').style.display = 'none';
+        }
+
+        document.getElementById('fSubject').textContent = parsed.subject;
+
+        let dateDisplay = '—';
+        let stampDay = '—', stampMon = '';
+        if (parsed.dateObj) {
+          dateDisplay = parsed.dateObj.toLocaleString('es-AR', { dateStyle: 'long', timeStyle: 'short' });
+          stampDay = String(parsed.dateObj.getDate());
+          stampMon = parsed.dateObj.toLocaleString('es-AR', { month: 'short' }).replace('.', '').toUpperCase();
+        } else if (parsed.dateRaw) {
+          dateDisplay = parsed.dateRaw;
+        }
+        document.getElementById('fDate').textContent = dateDisplay;
+        document.getElementById('stampDate').innerHTML = escapeHtml(stampDay) + (stampMon ? '<br>' + escapeHtml(stampMon) : '');
+
+        // Rendered iframe
+        const frame = document.getElementById('renderFrame');
+        let bodyHtml;
+        if (parsed.htmlContent) {
+          bodyHtml = parsed.htmlContent;
+          if (!/<html[\s>]/i.test(bodyHtml)) {
+            bodyHtml = '<html><head><meta charset="utf-8"></head><body>' + bodyHtml + '</body></html>';
+          }
+        } else if (parsed.textContent) {
+          bodyHtml = '<html><head><meta charset="utf-8"><style>body{font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;font-size:14.5px;line-height:1.6;padding:20px;color:#22271F;white-space:pre-wrap;}</style></head><body>' +
+            escapeHtml(parsed.textContent) + '</body></html>';
+        } else {
+          bodyHtml = '<html><body style="font-family:sans-serif;color:#8B9280;padding:24px;">Este correo no tiene contenido de cuerpo legible.</body></html>';
+        }
+        frame.srcdoc = bodyHtml;
+
+        // Attachments
+        const attachSection = document.getElementById('attachSection');
+        const attachList = document.getElementById('attachList');
+        attachList.innerHTML = '';
+        if (parsed.attachments.length) {
+          attachSection.style.display = 'block';
+          for (const att of parsed.attachments) {
+            const blob = new Blob([att.bytes], { type: att.mime });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.className = 'attach-chip';
+            a.href = url;
+            a.download = att.filename;
+            a.innerHTML = '<span class="paperclip">&#128206;</span><span class="meta"><span class="fname">' +
+              escapeHtml(att.filename) + '</span><span class="fsize">' + formatBytes(att.size) + '</span></span>';
+            attachList.appendChild(a);
+          }
+        } else {
+          attachSection.style.display = 'none';
+        }
+
+        // Raw EML code view
+        const rawCode = document.getElementById('rawCode');
+        const rawLines = document.getElementById('rawLines');
+        rawCode.textContent = rawText;
+        const lineCount = rawText.split('\n').length;
+        let lineNums = '';
+        for (let i = 1; i <= lineCount; i++) lineNums += i + '\n';
+        rawLines.textContent = lineNums;
+
+        // Clean HTML view
+        const cleanCode = document.getElementById('cleanCode');
+        if (parsed.htmlContent) {
+          cleanCode.textContent = parsed.htmlContent.trim();
+          document.getElementById('copyCleanBtn').disabled = false;
+          document.getElementById('downloadCleanBtn').disabled = false;
+        } else if (parsed.textContent) {
+          cleanCode.textContent = '<!-- Este correo no incluye una versión HTML. Se muestra el texto plano envuelto en HTML básico. -->\n\n' +
+            '<html>\n<body>\n  <p>' + escapeHtml(parsed.textContent).replace(/\n/g, '</p>\n  <p>') + '</p>\n</body>\n</html>';
+        } else {
+          cleanCode.textContent = 'No se encontró contenido HTML ni de texto en este correo.';
+        }
+
+        // store for downloads
+        window.__emlDownload = { bytes: origBytes, fileName };
       }
-    };
-    reader.onerror = function(){
-      showError('No se pudo leer el archivo.');
-    };
-    reader.readAsArrayBuffer(file);
-  }
 
-  /* ============================================================
-     RENDER UI
-     ============================================================ */
+      /* ============================================================
+         TABS
+         ============================================================ */
 
-  function renderApp(parsed, fileName, rawText, origBytes){
-    dropScreen.style.display = 'none';
-    appScreen.style.display = 'block';
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+          btn.classList.add('active');
+          document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+        });
+      });
 
-    document.getElementById('fileNameLabel').textContent = fileName;
+      /* ============================================================
+         COPY / DOWNLOAD ACTIONS
+         ============================================================ */
 
-    document.getElementById('fFrom').innerHTML = parsed.from ? escapeHtml(parsed.from) : '<span style="color:var(--ink-faint)">—</span>';
-    document.getElementById('fTo').innerHTML = parsed.to.length
-      ? parsed.to.map(a => '<span class="addr-chip">' + escapeHtml(a) + '</span>').join('')
-      : '<span style="color:var(--ink-faint)">—</span>';
-
-    if (parsed.cc.length){
-      document.getElementById('ccRow').style.display = 'flex';
-      document.getElementById('fCc').innerHTML = parsed.cc.map(a => '<span class="addr-chip">' + escapeHtml(a) + '</span>').join('');
-    } else {
-      document.getElementById('ccRow').style.display = 'none';
-    }
-
-    document.getElementById('fSubject').textContent = parsed.subject;
-
-    let dateDisplay = '—';
-    let stampDay = '—', stampMon = '';
-    if (parsed.dateObj){
-      dateDisplay = parsed.dateObj.toLocaleString('es-AR', {dateStyle:'long', timeStyle:'short'});
-      stampDay = String(parsed.dateObj.getDate());
-      stampMon = parsed.dateObj.toLocaleString('es-AR', {month:'short'}).replace('.', '').toUpperCase();
-    } else if (parsed.dateRaw){
-      dateDisplay = parsed.dateRaw;
-    }
-    document.getElementById('fDate').textContent = dateDisplay;
-    document.getElementById('stampDate').innerHTML = escapeHtml(stampDay) + (stampMon ? '<br>' + escapeHtml(stampMon) : '');
-
-    // Rendered iframe
-    const frame = document.getElementById('renderFrame');
-    let bodyHtml;
-    if (parsed.htmlContent){
-      bodyHtml = parsed.htmlContent;
-      if (!/<html[\s>]/i.test(bodyHtml)){
-        bodyHtml = '<html><head><meta charset="utf-8"></head><body>' + bodyHtml + '</body></html>';
+      function copyText(text, btn) {
+        const done = () => {
+          const original = btn.textContent;
+          btn.textContent = 'Copiado';
+          btn.classList.add('copied');
+          setTimeout(() => { btn.textContent = original; btn.classList.remove('copied'); }, 1400);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+        } else {
+          fallbackCopy(text, done);
+        }
       }
-    } else if (parsed.textContent){
-      bodyHtml = '<html><head><meta charset="utf-8"><style>body{font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;font-size:14.5px;line-height:1.6;padding:20px;color:#22271F;white-space:pre-wrap;}</style></head><body>' +
-        escapeHtml(parsed.textContent) + '</body></html>';
-    } else {
-      bodyHtml = '<html><body style="font-family:sans-serif;color:#8B9280;padding:24px;">Este correo no tiene contenido de cuerpo legible.</body></html>';
-    }
-    frame.srcdoc = bodyHtml;
-
-    // Attachments
-    const attachSection = document.getElementById('attachSection');
-    const attachList = document.getElementById('attachList');
-    attachList.innerHTML = '';
-    if (parsed.attachments.length){
-      attachSection.style.display = 'block';
-      for (const att of parsed.attachments){
-        const blob = new Blob([att.bytes], {type: att.mime});
+      function fallbackCopy(text, done) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); done(); } catch (e) { }
+        document.body.removeChild(ta);
+      }
+      function downloadBlob(content, filename, mime) {
+        const blob = content instanceof Uint8Array ? new Blob([content], { type: mime }) : new Blob([content], { type: mime });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.className = 'attach-chip';
-        a.href = url;
-        a.download = att.filename;
-        a.innerHTML = '<span class="paperclip">&#128206;</span><span class="meta"><span class="fname">' +
-          escapeHtml(att.filename) + '</span><span class="fsize">' + formatBytes(att.size) + '</span></span>';
-        attachList.appendChild(a);
+        a.href = url; a.download = filename;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
       }
-    } else {
-      attachSection.style.display = 'none';
-    }
 
-    // Raw EML code view
-    const rawCode = document.getElementById('rawCode');
-    const rawLines = document.getElementById('rawLines');
-    rawCode.textContent = rawText;
-    const lineCount = rawText.split('\n').length;
-    let lineNums = '';
-    for (let i=1;i<=lineCount;i++) lineNums += i + '\n';
-    rawLines.textContent = lineNums;
+      document.getElementById('copyRawBtn').addEventListener('click', function () {
+        copyText(currentRawText, this);
+      });
+      document.getElementById('downloadRawBtn').addEventListener('click', function () {
+        const d = window.__emlDownload;
+        downloadBlob(d.bytes, d.fileName || 'mensaje.eml', 'message/rfc822');
+      });
+      document.getElementById('copyCleanBtn').addEventListener('click', function () {
+        copyText(document.getElementById('cleanCode').textContent, this);
+      });
+      document.getElementById('downloadCleanBtn').addEventListener('click', function () {
+        const base = (window.__emlDownload && window.__emlDownload.fileName || 'mensaje').replace(/\.eml$/i, '');
+        downloadBlob(document.getElementById('cleanCode').textContent, base + '.html', 'text/html');
+      });
 
-    // Clean HTML view
-    const cleanCode = document.getElementById('cleanCode');
-    if (parsed.htmlContent){
-      cleanCode.textContent = parsed.htmlContent.trim();
-      document.getElementById('copyCleanBtn').disabled = false;
-      document.getElementById('downloadCleanBtn').disabled = false;
-    } else if (parsed.textContent){
-      cleanCode.textContent = '<!-- Este correo no incluye una versión HTML. Se muestra el texto plano envuelto en HTML básico. -->\n\n' +
-        '<html>\n<body>\n  <p>' + escapeHtml(parsed.textContent).replace(/\n/g,'</p>\n  <p>') + '</p>\n</body>\n</html>';
-    } else {
-      cleanCode.textContent = 'No se encontró contenido HTML ni de texto en este correo.';
-    }
+      document.getElementById('loadAnotherBtn').addEventListener('click', function () {
+        appScreen.style.display = 'none';
+        dropScreen.style.display = 'flex';
+        fileInput.value = '';
+        clearError();
+      });
 
-    // store for downloads
-    window.__emlDownload = { bytes: origBytes, fileName };
-  }
-
-  /* ============================================================
-     TABS
-     ============================================================ */
-
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
-    });
-  });
-
-  /* ============================================================
-     COPY / DOWNLOAD ACTIONS
-     ============================================================ */
-
-  function copyText(text, btn){
-    const done = () => {
-      const original = btn.textContent;
-      btn.textContent = 'Copiado';
-      btn.classList.add('copied');
-      setTimeout(() => { btn.textContent = original; btn.classList.remove('copied'); }, 1400);
-    };
-    if (navigator.clipboard && navigator.clipboard.writeText){
-      navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
-    } else {
-      fallbackCopy(text, done);
-    }
-  }
-  function fallbackCopy(text, done){
-    const ta = document.createElement('textarea');
-    ta.value = text;
-    ta.style.position = 'fixed';
-    ta.style.opacity = '0';
-    document.body.appendChild(ta);
-    ta.select();
-    try { document.execCommand('copy'); done(); } catch(e){}
-    document.body.removeChild(ta);
-  }
-  function downloadBlob(content, filename, mime){
-    const blob = content instanceof Uint8Array ? new Blob([content], {type: mime}) : new Blob([content], {type: mime});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = filename;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
-  }
-
-  document.getElementById('copyRawBtn').addEventListener('click', function(){
-    copyText(currentRawText, this);
-  });
-  document.getElementById('downloadRawBtn').addEventListener('click', function(){
-    const d = window.__emlDownload;
-    downloadBlob(d.bytes, d.fileName || 'mensaje.eml', 'message/rfc822');
-  });
-  document.getElementById('copyCleanBtn').addEventListener('click', function(){
-    copyText(document.getElementById('cleanCode').textContent, this);
-  });
-  document.getElementById('downloadCleanBtn').addEventListener('click', function(){
-    const base = (window.__emlDownload && window.__emlDownload.fileName || 'mensaje').replace(/\.eml$/i, '');
-    downloadBlob(document.getElementById('cleanCode').textContent, base + '.html', 'text/html');
-  });
-
-  document.getElementById('loadAnotherBtn').addEventListener('click', function(){
-    appScreen.style.display = 'none';
-    dropScreen.style.display = 'flex';
-    fileInput.value = '';
-    clearError();
-  });
-
-})();
-</script>
+    })();
+  </script>
 </body>
+
 </html>
