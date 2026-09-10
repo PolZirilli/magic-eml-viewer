@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Eml Magic Viewr</title>
+  <title>Magic EML Viewer</title>
   <style>
     :root {
       --bg: #EAEDE6;
@@ -443,6 +443,7 @@
     /* Raw code view */
     .code-view {
       display: flex;
+      align-items: flex-start;
       max-height: 560px;
       overflow: auto;
       font-family: var(--mono);
@@ -459,15 +460,20 @@
       color: var(--mono-line);
       user-select: none;
       border-right: 1px solid rgba(255, 255, 255, 0.08);
-      flex-shrink: 0;
+      white-space: pre;
+      flex: 0 0 auto;
+      position: sticky;
+      left: 0;
+      background: var(--mono-bg);
+      z-index: 2;
     }
 
     .code-view pre {
       margin: 0;
       padding: 14px 16px;
-      white-space: pre-wrap;
-      word-break: break-word;
-      flex: 1;
+      white-space: pre;
+      flex: 1 0 auto;
+      min-width: 100%;
     }
 
     .html-view {
@@ -526,7 +532,7 @@
   <div class="wrap">
 
     <div class="masthead">
-      <h1>Eml Magic Viewer</h1>
+      <h1>Magic EML Viewer</h1>
       <div class="tag">Subí un archivo .eml para ver el correo renderizado, su código fuente o el HTML limpio.</div>
     </div>
 
@@ -623,7 +629,7 @@
 
     </div>
 
-    <footer>Visor EML &middot; funciona completamente en el navegador, sin conexión a servidores externos.</footer>
+    <footer>Magic EML Viewer &middot; funciona completamente en el navegador, sin conexión a servidores externos. powered by @PolZirilli</footer>
   </div>
 
   <script>
